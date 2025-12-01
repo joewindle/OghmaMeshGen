@@ -1,0 +1,13 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# OghmaNano/Simulation outputs (Don't clutter your repo with these)
+*.dat
+*.log
+*.job
+output/
+sim_results/
+
+# OS system files
+.DS_Store
