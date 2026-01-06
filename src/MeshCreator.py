@@ -1,5 +1,6 @@
 import math
 import json
+import numpy as np
 
 class point_3D():
     _next_point_id = 1  #Local variable to point_3D class, allows each new point_3D object to have a unique id
@@ -338,6 +339,48 @@ def create_cuboid_from_dimensions(x_len, y_len, z_len, origin=(0, 0, 0)): #Given
     return cub
 
 
+def create_polygon_points(edges, radius, center=(0,0,0)):   #Assuming working on xy plane, can rotate after to fit
+    points = []
+    triangles = []
+    for i in range(0, edges+1):
+        x0 = center[0] + radius*np.cos((2*np.pi*i)/edges)
+        y0 = center[1] + radius*np.sin((2*np.pi*i)/edges)
+        points.append(point_3D(x0, y0, center[2]))
+    return points
+
+def create_polygon_triangles(points):
+    triangles = []
+    print(len(points))
+    for i in range(0, len(points)-1):
+        t = triangle(points[0], points[i+1], points[i+2])
+        triangles.append(t)
+    return triangles
+
+def create_hollow_polygon(edges, large_radius, small_radius, thickness, center=(0,0,0)):
+    small_points = create_polygon_points(edges, small_radius, center)
+    large_points = create_polygon_points(edges, large_radius, center)
+    deep_center = center
+    deep_center[2] = thickness
+    small_points_depth = create_polygon_points(edges, small_radius, deep_center)
+    large_points_depth = create_polygon_points(edges, large_radius, deep_center)
+    points = [small_points, large_points, small_points_depth, large_points_depth]
+    triangles = []
+    for j in range(0,2):
+        for i in range(0, len(small_points)-1):
+            t1 = triangle(points[2*j][i], points[2*j+1][i], points[2*j+1][i+1])
+            t2 = triangle(points[2*j][i], points[2*j][i+1], points[2*j+1][i+1])
+            triangles.append(t1)
+            triangles.append(t2)
+    for j in range(0,2):
+        for i in range(0, len(small_points)-1):
+            t1 = triangle(points[j][i], points[j+2][i], points[j+2][i+1])
+            t2 = triangle(points[j][i], points[j][i+1], points[j+2][i+1])
+            triangles.append(t1)
+            triangles.append(t2)
+    return triangles
+
+                   
+
 
 def export_assembly_inp(assembly_obj, filename="shape.inp"):
     # This will now remove internal faces by default
@@ -376,101 +419,11 @@ def export_assembly_inp(assembly_obj, filename="shape.inp"):
 
 
 
-if __name__ == "__main__":
-    mirror_x = 118
-    mirror_y = 84
-    mirror_z = 4
-    # Reset ID counters
-    point_3D.reset_id_counter(1)
-    triangle.reset_id_counter(1)
-    rectangle.reset_id_counter(1)
-    cuboid.reset_id_counter(1)
-
-    # Create an assembly
-    my_assembly = assembly("MyShape")
-
-    cuboid9 = create_cuboid_from_dimensions(42.98, mirror_y, mirror_z)
-    #cuboid9.rotate_y(-45, [6.5, 6.5, 49.09])
-    my_assembly.add_cuboid(cuboid9)
-
-    cuboid10 = create_cuboid_from_dimensions(46.83, 20.27, mirror_z, origin=(42.98, 0, 0))
-    for point in cuboid10.get_all_points():
-        point.return_point()
-        if point.point_id == 12 or point.point_id == 16:
-            point.move_point(0, 10.35, 0)
-            point.return_point()
+hexagon_hollow = create_hollow_polygon(6, 10, 5, 1, [10,10,10])
 
 
-    
-    #cuboid10.rotate_y(-45, [6.5, 6.5, 49.09])
-    my_assembly.add_cuboid(cuboid10)
-
-    cuboid11 = create_cuboid_from_dimensions(46.83, 20.27, mirror_z, origin=(42.98, 63.73, 0))
-    for point in cuboid11.get_all_points():
-        point.return_point()
-        if point.point_id == 17 or point.point_id == 21:
-            point.move_point(0, -10.35, 0)
-            point.return_point()
-    #cuboid11.rotate_y(-45, [6.5, 6.5, 49.09])
-    my_assembly.add_cuboid(cuboid11)
-
-    cuboid12 = create_cuboid_from_dimensions(28.19, mirror_y, mirror_z, origin=(89.81,0,0))
-    #cuboid12.rotate_y(-45, [6.5, 6.5, 49.09])
-    my_assembly.add_cuboid(cuboid12)
-
-    cuboid13 = create_cuboid_from_dimensions(mirror_x, (mirror_y-43.46)/2, mirror_z, origin=(0,0,0))
-    #cuboid13.rotate_y(-45, [6.5, 6.5, 49.09])
-    my_assembly.add_cuboid(cuboid13)
-
-    cuboid14 = create_cuboid_from_dimensions(mirror_x, (mirror_y-43.46)/2, mirror_z, origin=(0,2*mirror_y/3,0))
-    #cuboid14.rotate_y(-45, [6.5, 6.5, 49.09])
-    my_assembly.add_cuboid(cuboid14)
-
-    cuboid15 = create_cuboid_from_dimensions(91.816, 20.72, mirror_z, origin=(0,0,0))
-    #cuboid15.rotate_y(-45, [6.5, 6.5, 49.09])
-    cuboid15.rotate_z(-12, [91.816, 0, 49.09])
-    my_assembly.add_cuboid(cuboid15)
-
-    cuboid16 = create_cuboid_from_dimensions(91.816, 20.72, mirror_z, origin=(0,2*mirror_y/3,0))
-    #cuboid16.rotate_y(-45, [6.5, 6.5, 49.09])
-    cuboid16.rotate_z(12, [91.816, 2*mirror_y/3, 49.09])
-    my_assembly.add_cuboid(cuboid16)
-
-    export_assembly_inp(my_assembly, "simple_hole.inp")
-
-    
-
-
-    """
-
-    #Generate the 8 needed cuboids for simple design
-    
-    cuboid1 = create_cuboid_from_dimensions(83, 6.5, 49.09, origin=(0, 0, 0))
-    my_assembly.add_cuboid(cuboid1)
-
-    cuboid2 = create_cuboid_from_dimensions(6.5, 83, 49.09, origin=(0, 6.5, 0))
-    my_assembly.add_cuboid(cuboid2)
-
-    
-    cuboid3 = create_cuboid_from_dimensions(83, 6.5, 49.09, origin=(0, 89.5, 0))
-    my_assembly.add_cuboid(cuboid3)
-
-
-    cuboid4 = create_cuboid_from_dimensions(6.5, 83, 49.09, origin=(76.5, 6.5, 0))
-    my_assembly.add_cuboid(cuboid4)
-
-    #cuboid5 = create_cuboid_from_dimensions(118, 84, 6.5)
-    #cuboid5.rotate_y(-45, [6.5, 6.5, 49.09])
-    #my_assembly.add_cuboid(cuboid5)
-
-    
-    cuboid6 = create_cuboid_from_dimensions(6.5, 6.5, 102, origin=(76.5, 0, 49.09))
-    my_assembly.add_cuboid(cuboid6)
-
-    cuboid7 = create_cuboid_from_dimensions(6.5, 6.5, 102, origin=(76.5, 89.5, 49.09))
-    my_assembly.add_cuboid(cuboid7)
-
-    cuboid8 = create_cuboid_from_dimensions(6.5, 83, 6.5, origin=(76.5, 6.5, 144.59))
-    my_assembly.add_cuboid(cuboid8)
-"""
+hexagon_baffle = assembly("Hexagon Baffle")
+for tri in hexagon_hollow:
+    hexagon_baffle.add_triangle(tri)
+export_assembly_inp(hexagon_baffle)
     
