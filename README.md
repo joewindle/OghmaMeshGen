@@ -25,3 +25,5 @@ There are also extra functions, such as create_cuboid_from_dimensions, that auto
 This allows for common shapes to be made quickly, whereas new shapes will have to be defined from scratch, or from multiple of these automated shapes pushed together.
 
 There is finally a function that takes all the triangles inside an assembly and writes their coordinates in the correct format to a .inp file, which can then be imported to OghmaNano
+
+Recently updated to inlude a function for polygons and polygon holes.
